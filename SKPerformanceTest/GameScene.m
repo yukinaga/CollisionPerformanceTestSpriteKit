@@ -8,42 +8,58 @@
 
 #import "GameScene.h"
 
+@interface GameScene () <SKPhysicsContactDelegate>
+{
+    int count;
+}
+@end
+
 @implementation GameScene
 
 -(void)didMoveToView:(SKView *)view {
     /* Setup your scene here */
-    SKLabelNode *myLabel = [SKLabelNode labelNodeWithFontNamed:@"Chalkduster"];
-    
-    myLabel.text = @"Hello, World!";
-    myLabel.fontSize = 65;
-    myLabel.position = CGPointMake(CGRectGetMidX(self.frame),
-                                   CGRectGetMidY(self.frame));
-    
-    [self addChild:myLabel];
+    count = 0;
+    self.physicsBody = [SKPhysicsBody bodyWithEdgeLoopFromRect:self.frame];
+    self.physicsWorld.contactDelegate = self;
 }
 
--(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-    /* Called when a touch begins */
+-(void)createBall{
+    CGFloat radius = 5;
+    float angle = (arc4random() % UINT32_MAX)*2*M_PI;
+    float speed = 60.0;
+    CGFloat velocityX = speed * cosf(angle);
+    CGFloat velocityY = speed * sinf(angle);
+
+    SKShapeNode *ball = [SKShapeNode node];
+    ball.name = @"ball";
+    ball.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame) );
     
-    for (UITouch *touch in touches) {
-        CGPoint location = [touch locationInNode:self];
-        
-        SKSpriteNode *sprite = [SKSpriteNode spriteNodeWithImageNamed:@"Spaceship"];
-        
-        sprite.xScale = 0.5;
-        sprite.yScale = 0.5;
-        sprite.position = location;
-        
-        SKAction *action = [SKAction rotateByAngle:M_PI duration:1];
-        
-        [sprite runAction:[SKAction repeatActionForever:action]];
-        
-        [self addChild:sprite];
-    }
+    CGMutablePathRef path = CGPathCreateMutable();
+    CGPathAddArc(path, NULL, 0, 0, radius, 0, M_PI * 2, YES);
+    ball.path = path;
+    ball.fillColor = [SKColor orangeColor];
+    ball.strokeColor = [SKColor clearColor];
+    
+    CGPathRelease(path);
+    
+    ball.physicsBody = [SKPhysicsBody bodyWithCircleOfRadius:radius];
+    ball.physicsBody.affectedByGravity = NO;
+    ball.physicsBody.velocity = CGVectorMake(velocityX, velocityY);
+    ball.physicsBody.restitution = 1.0f;
+    ball.physicsBody.linearDamping = 0;
+    ball.physicsBody.friction = 0;
+    ball.physicsBody.usesPreciseCollisionDetection = NO;
+    ball.physicsBody.allowsRotation = NO;
+    
+    [self addChild:ball];
 }
 
 -(void)update:(CFTimeInterval)currentTime {
-    /* Called before each frame is rendered */
+    //100回のボールが出現
+    if (count < 100) {
+        [self createBall];
+        count++;
+    }
 }
 
 @end
